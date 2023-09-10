@@ -36,7 +36,7 @@ def p_mean_variance(model, x, t):
     return mean, log_var
 
 def p_sample(model, x, t,alphas,betas,one_minus_alphas_bar_sqrt):
-    t = torch.tensor([t])
+    t = torch.tensor([t]).to(x.device)
     # Factor to the model output
     eps_factor = ((1 - extract(alphas, t, x)) / extract(one_minus_alphas_bar_sqrt, t, x))
     # Model output
@@ -51,7 +51,7 @@ def p_sample(model, x, t,alphas,betas,one_minus_alphas_bar_sqrt):
     return (sample)
 
 def p_sample_loop(model, shape,n_steps,alphas,betas,one_minus_alphas_bar_sqrt):
-    cur_x = torch.randn(shape)
+    cur_x = torch.randn(shape).to(alphas.device)
     x_seq = [cur_x]
     for i in reversed(range(n_steps)):
         cur_x = p_sample(model, cur_x, i,alphas,betas,one_minus_alphas_bar_sqrt)
@@ -110,7 +110,7 @@ def loss_variational(model, x_0,alphas_bar_sqrt, one_minus_alphas_bar_sqrt,poste
 def noise_estimation_loss(model, x_0,alphas_bar_sqrt,one_minus_alphas_bar_sqrt,n_steps):
     batch_size = x_0.shape[0]
     # Select a random step for each example
-    t = torch.randint(0, n_steps, size=(batch_size // 2 + 1,))
+    t = torch.randint(0, n_steps, size=(batch_size // 2 + 1,)).to(x_0.device)
     t = torch.cat([t, n_steps - t - 1], dim=0)[:batch_size].long()
     # x0 multiplier
     a = extract(alphas_bar_sqrt, t, x_0)
